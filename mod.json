@@ -1,0 +1,21 @@
+{
+  "geode": "5.11.2",
+  "gd": {
+    "win": "*",
+    "android": "*",
+    "mac": "*",
+    "ios": "*"
+  },
+  "version": "v1.0.0",
+  "id": "alexey.deathmusic",
+  "name": "Death Music",
+  "developer": "Alexey",
+  "description": "Меняет музыку на случайную скачанную из Jukebox при каждой смерти",
+  "dependencies": [
+    {
+      "id": "fleym.nongd",
+      "version": ">=3.0.0",
+      "importance": "required"
+    }
+  ]
+}
