@@ -11,11 +11,10 @@
   "name": "Death Music",
   "developer": "Alexey",
   "description": "Меняет музыку на случайную скачанную из Jukebox при каждой смерти",
-  "dependencies": [
-    {
-      "id": "fleym.nongd",
+  "dependencies": {
+    "fleym.nongd": {
       "version": ">=3.0.0",
       "importance": "required"
     }
-  ]
+  }
 }
