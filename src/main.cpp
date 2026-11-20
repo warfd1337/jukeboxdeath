@@ -198,9 +198,13 @@ class $modify(DeathMusicPause, PauseLayer) {
         );
 
         CCSize winSize = CCDirector::get()->getWinSize();
+        float x = winSize.width - 30.f;
+        if (Mod::get()->getSettingValue<bool>("pause-button-left")) {
+            x = 30.f;
+        }
         CCMenu* menu = CCMenu::create();
         menu->addChild(button);
-        menu->setPosition({winSize.width - 30.f, winSize.height - 30.f});
+        menu->setPosition({x, 30.f});
         this->addChild(menu);
     }
 
