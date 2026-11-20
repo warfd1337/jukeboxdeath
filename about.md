@@ -7,7 +7,7 @@ When you die, the mod picks another NONG that you already saved in Jukebox for t
 ## Settings
 
 - **Change music on death**: turns the switching on or off.
-- **Change from level percent**: the NONG only changes if you die at this percent or later. Default is 60.
+- **Change from level percent**: the NONG only changes if you die at this percent or later. Default is 50.
 
 ## Good to know
 
