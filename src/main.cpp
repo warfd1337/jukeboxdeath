@@ -1,6 +1,8 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/GJGameLevel.hpp>
+#include <Geode/modify/PauseLayer.hpp>
+#include <Geode/ui/GeodeUI.hpp>
 #include <Geode/modify/MusicDownloadManager.hpp>
 #include <cstdlib>
 #include <ctime>
@@ -175,5 +177,34 @@ class $modify(DeathMusicLayer, PlayLayer) {
     void onQuit() {
         resetState();
         PlayLayer::onQuit();
+    }
+};
+
+class $modify(DeathMusicPause, PauseLayer) {
+    void customSetup() {
+        PauseLayer::customSetup();
+
+        CCSprite* icon = CCSprite::createWithSpriteFrameName("GJ_musicOnBtn_001.png");
+        CCSprite* sprite = nullptr;
+        if (icon != nullptr) {
+            sprite = CircleButtonSprite::create(icon);
+        } else {
+            sprite = ButtonSprite::create("DM");
+        }
+        sprite->setScale(0.8f);
+
+        CCMenuItemSpriteExtra* button = CCMenuItemSpriteExtra::create(
+            sprite, this, menu_selector(DeathMusicPause::onDeathMusic)
+        );
+
+        CCSize winSize = CCDirector::get()->getWinSize();
+        CCMenu* menu = CCMenu::create();
+        menu->addChild(button);
+        menu->setPosition({winSize.width - 30.f, winSize.height - 30.f});
+        this->addChild(menu);
+    }
+
+    void onDeathMusic(CCObject*) {
+        openSettingsPopup(Mod::get());
     }
 };
