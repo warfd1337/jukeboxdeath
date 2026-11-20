@@ -6,7 +6,7 @@
     "mac": "*",
     "ios": "*"
   },
-  "version": "v1.0.1",
+  "version": "v1.0.2",
   "id": "warfd.deathmusic",
   "name": "Death Music",
   "developer": "warfd",
@@ -20,21 +20,27 @@
   "settings": {
     "mod-active": {
       "type": "bool",
-      "name": "Change song after your death",
-      "description": "Enable Mod",
+      "name": "Change music on death",
+      "description": "Turns the NONG switching on or off",
       "default": true
     },
     "min-percent": {
       "type": "int",
-      "name": "Change at %",
-      "description": "NONG changes only when you die at this exact percent",
-      "default": 50,
+      "name": "Change from level percent",
+      "description": "The NONG only changes if you die at this percent of the level or later",
+      "default": 60,
       "min": 0,
       "max": 100,
       "control": {
         "slider": true,
         "input": true
       }
+    },
+    "change-on-startpos": {
+      "type": "bool",
+      "name": "Change music in start pos",
+      "description": "Also change the NONG when you play from a start pos",
+      "default": false
     }
   }
 }
