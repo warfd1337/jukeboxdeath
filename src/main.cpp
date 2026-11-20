@@ -1,59 +1,107 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/MusicDownloadManager.hpp>
-#include <ctime>
 #include <cstdlib>
+#include <ctime>
 #include <filesystem>
+#include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 
 using namespace geode::prelude;
 
-std::string g_currentSong;
+struct Song {
+    std::string id;
+    std::string path;
+};
+
+int g_songID = 0;
+std::string g_currentID;
+std::string g_currentPath;
 
 $execute {
     std::srand(static_cast<unsigned>(std::time(nullptr)));
 }
 
-std::vector<std::string> getSongs() {
-    std::vector<std::string> songs;
+void addSongs(const matjson::Value& list, const std::filesystem::path& nongsFolder, std::vector<Song>& songs) {
+    if (!list.isArray()) {
+        return;
+    }
+    for (const matjson::Value& item : list) {
+        if (!item["unique_id"].isString()) {
+            continue;
+        }
+        std::filesystem::path path;
+        if (item["filename"].isString()) {
+            path = nongsFolder / item["filename"].asString().unwrap();
+        } else if (item["path"].isString()) {
+            path = item["path"].asString().unwrap();
+        } else {
+            continue;
+        }
+        std::error_code error;
+        if (!std::filesystem::exists(path, error)) {
+            continue;
+        }
+        songs.push_back({item["unique_id"].asString().unwrap(), utils::string::pathToString(path)});
+    }
+}
+
+std::vector<Song> readSongs(int songID, std::string& activeID) {
+    std::vector<Song> songs;
     Mod* jukebox = Loader::get()->getLoadedMod("fleym.nongd");
     if (jukebox == nullptr) {
         return songs;
     }
-    std::filesystem::path folder = jukebox->getSaveDir() / "nongs";
-    std::error_code error;
-    if (!std::filesystem::exists(folder, error)) {
+    std::filesystem::path base(jukebox->getSaveDir().native());
+    std::ifstream stream(base / "manifest" / (std::to_string(songID) + ".json"));
+    if (!stream.is_open()) {
         return songs;
     }
-    for (const auto& entry : std::filesystem::directory_iterator(folder, error)) {
-        if (!entry.is_regular_file()) {
-            continue;
-        }
-        std::string ext = entry.path().extension().string();
-        if (ext == ".mp3" || ext == ".ogg" || ext == ".wav") {
-            songs.push_back(utils::string::pathToString(entry.path()));
-        }
+    std::stringstream buffer;
+    buffer << stream.rdbuf();
+    auto parsed = matjson::Value::parse(buffer.str());
+    if (parsed.isErr()) {
+        return songs;
     }
+    matjson::Value json = parsed.unwrap();
+    if (json["active"].isString()) {
+        activeID = json["active"].asString().unwrap();
+    }
+    addSongs(json["locals"], base / "nongs", songs);
+    addSongs(json["youtube"], base / "nongs", songs);
+    addSongs(json["hosted"], base / "nongs", songs);
     return songs;
 }
 
-void pickNextSong() {
-    std::vector<std::string> songs = getSongs();
-    if (songs.empty()) {
-        log::warn("Скачанных песен Jukebox не найдено");
+void pickNextSong(int songID) {
+    std::string activeID;
+    std::vector<Song> songs = readSongs(songID, activeID);
+    if (g_currentID.empty()) {
+        g_currentID = activeID;
+    }
+    std::vector<Song> others;
+    for (const Song& song : songs) {
+        if (song.id != g_currentID) {
+            others.push_back(song);
+        }
+    }
+    if (others.empty()) {
+        log::info("No other saved NONGs for song {}", songID);
         return;
     }
-    if (songs.size() == 1) {
-        g_currentSong = songs[0];
-        return;
-    }
-    std::string next = g_currentSong;
-    while (next == g_currentSong) {
-        next = songs[std::rand() % songs.size()];
-    }
-    g_currentSong = next;
-    log::info("Новая песня: {}", g_currentSong);
+    Song next = others[std::rand() % others.size()];
+    g_songID = songID;
+    g_currentID = next.id;
+    g_currentPath = next.path;
+    log::info("New song: {}", next.path);
+}
+
+void resetState() {
+    g_songID = 0;
+    g_currentID = "";
+    g_currentPath = "";
 }
 
 class $modify(DeathMusicManager, MusicDownloadManager) {
@@ -63,8 +111,8 @@ class $modify(DeathMusicManager, MusicDownloadManager) {
 
     std::string pathForSong(int id) {
         std::error_code error;
-        if (!g_currentSong.empty() && std::filesystem::exists(g_currentSong, error)) {
-            return g_currentSong;
+        if (id == g_songID && !g_currentPath.empty() && std::filesystem::exists(g_currentPath, error)) {
+            return g_currentPath;
         }
         return MusicDownloadManager::pathForSong(id);
     }
@@ -76,27 +124,32 @@ class $modify(DeathMusicLayer, PlayLayer) {
     };
 
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
-        g_currentSong = "";
+        resetState();
         return PlayLayer::init(level, useReplay, dontCreateObjects);
     }
 
     void destroyPlayer(PlayerObject* player, GameObject* object) {
-        if (object != m_anticheatSpike) {
+        bool active = Mod::get()->getSettingValue<bool>("mod-active");
+        int64_t minPercent = Mod::get()->getSettingValue<int64_t>("min-percent");
+        if (active && object != m_anticheatSpike && this->getCurrentPercent() >= minPercent) {
             m_fields->died = true;
         }
         PlayLayer::destroyPlayer(player, object);
     }
 
     void resetLevel() {
-        if (m_fields->died) {
+        if (!Mod::get()->getSettingValue<bool>("mod-active")) {
             m_fields->died = false;
-            pickNextSong();
+            resetState();
+        } else if (m_fields->died) {
+            m_fields->died = false;
+            pickNextSong(m_level->m_songID);
         }
         PlayLayer::resetLevel();
     }
 
     void onQuit() {
-        g_currentSong = "";
+        resetState();
         PlayLayer::onQuit();
     }
 };
