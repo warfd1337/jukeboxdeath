@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
+#include <Geode/modify/GJGameLevel.hpp>
 #include <Geode/modify/MusicDownloadManager.hpp>
 #include <cstdlib>
 #include <ctime>
@@ -98,6 +99,13 @@ void pickNextSong(int songID) {
     log::info("New song: {}", next.path);
 }
 
+int getSongKey(GJGameLevel* level) {
+    if (level->m_songID != 0) {
+        return level->m_songID;
+    }
+    return -level->m_audioTrack - 1;
+}
+
 void resetState() {
     g_songID = 0;
     g_currentID = "";
@@ -118,6 +126,20 @@ class $modify(DeathMusicManager, MusicDownloadManager) {
     }
 };
 
+class $modify(DeathMusicLevel, GJGameLevel) {
+    static void onModify(auto& self) {
+        (void)self.setHookPriority("GJGameLevel::getAudioFileName", Priority::First);
+    }
+
+    std::string getAudioFileName() {
+        std::error_code error;
+        if (m_songID == 0 && g_songID == getSongKey(this) && !g_currentPath.empty() && std::filesystem::exists(g_currentPath, error)) {
+            return g_currentPath;
+        }
+        return GJGameLevel::getAudioFileName();
+    }
+};
+
 class $modify(DeathMusicLayer, PlayLayer) {
     struct Fields {
         bool died = false;
@@ -130,8 +152,10 @@ class $modify(DeathMusicLayer, PlayLayer) {
 
     void destroyPlayer(PlayerObject* player, GameObject* object) {
         bool active = Mod::get()->getSettingValue<bool>("mod-active");
+        bool allowStartPos = Mod::get()->getSettingValue<bool>("change-on-startpos");
         int64_t minPercent = Mod::get()->getSettingValue<int64_t>("min-percent");
-        if (active && object != m_anticheatSpike && this->getCurrentPercent() >= minPercent) {
+        bool startPosOk = m_startPosObject == nullptr || allowStartPos;
+        if (active && startPosOk && object != m_anticheatSpike && this->getCurrentPercent() >= minPercent) {
             m_fields->died = true;
         }
         PlayLayer::destroyPlayer(player, object);
@@ -143,7 +167,7 @@ class $modify(DeathMusicLayer, PlayLayer) {
             resetState();
         } else if (m_fields->died) {
             m_fields->died = false;
-            pickNextSong(m_level->m_songID);
+            pickNextSong(getSongKey(m_level));
         }
         PlayLayer::resetLevel();
     }
