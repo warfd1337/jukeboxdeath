@@ -6,15 +6,35 @@
     "mac": "*",
     "ios": "*"
   },
-  "version": "v1.0.0",
-  "id": "alexey.deathmusic",
+  "version": "v1.0.1",
+  "id": "warfd.deathmusic",
   "name": "Death Music",
-  "developer": "Alexey",
-  "description": "Меняет музыку на случайную скачанную из Jukebox при каждой смерти",
+  "developer": "warfd",
+  "description": "Change NONG randomly after death on the level you trying to complete!",
   "dependencies": {
     "fleym.nongd": {
       "version": ">=3.0.0",
       "importance": "required"
+    }
+  },
+  "settings": {
+    "mod-active": {
+      "type": "bool",
+      "name": "Change song after your death",
+      "description": "Enable Mod",
+      "default": true
+    },
+    "min-percent": {
+      "type": "int",
+      "name": "Change at %",
+      "description": "NONG changes only when you die at this exact percent",
+      "default": 50,
+      "min": 0,
+      "max": 100,
+      "control": {
+        "slider": true,
+        "input": true
+      }
     }
   }
 }
