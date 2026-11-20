@@ -41,6 +41,12 @@
       "name": "Change music in start pos",
       "description": "Also change the NONG when you play from a start pos",
       "default": false
+    },
+    "pause-button-left": {
+      "type": "bool",
+      "name": "Pause button on the left",
+      "description": "On puts the settings button in the bottom left corner of the pause menu, off puts it in the bottom right. Applies the next time you pause",
+      "default": true
     }
   }
 }
