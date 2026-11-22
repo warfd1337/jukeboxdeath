@@ -350,7 +350,7 @@ CCSprite* makeSettingsSprite() {
 }
 
 CCSprite* makePoolSprite() {
-    CCSprite* disc = CCSprite::create("JB_PinDisc.png"_spr.c_str());
+    CCSprite* disc = CCSprite::create("JB_PinDisc.png"_spr);
     if (disc != nullptr) {
         disc->setScale(36.f / disc->getContentHeight());
         return disc;
