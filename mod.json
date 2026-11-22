@@ -6,7 +6,7 @@
     "mac": "*",
     "ios": "*"
   },
-  "version": "v1.0.2",
+  "version": "v1.1.0",
   "id": "warfd.deathmusic",
   "name": "Death Music",
   "developer": "warfd",
@@ -27,7 +27,7 @@
     "min-percent": {
       "type": "int",
       "name": "Change from level percent",
-      "description": "The NONG only changes if you die at this percent of the level or later",
+      "description": "The NONG only changes if you die at this percent of the level or later. Not used when random chance is on",
       "default": 60,
       "min": 0,
       "max": 100,
@@ -45,8 +45,31 @@
     "pause-button-left": {
       "type": "bool",
       "name": "Pause button on the left",
-      "description": "On puts the settings button in the bottom left corner of the pause menu, off puts it in the bottom right. Applies the next time you pause",
+      "description": "On puts the pause menu buttons in the bottom left corner, off puts them in the bottom right. Applies the next time you pause",
       "default": true
+    },
+    "use-chance": {
+      "type": "bool",
+      "name": "Use random chance",
+      "description": "Ignores the level percent. Every death gets a chance to change the NONG instead",
+      "default": false
+    },
+    "change-chance": {
+      "type": "int",
+      "name": "Change chance (%)",
+      "description": "Chance that a death changes the NONG. Only used when random chance is on",
+      "default": 50,
+      "min": 1,
+      "max": 100,
+      "control": {
+        "slider": true,
+        "input": true
+      }
     }
+  },
+  "resources": {
+    "sprites": [
+      "resources/*.png"
+    ]
   }
 }
